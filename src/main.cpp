@@ -12,20 +12,25 @@
 #include <string>
 
 int main(int argc, char *argv[]) {
-    
-    cxxopts::Options options{"OptimalBlending"};
+
+    cxxopts::Options options{"EnsembleDenoising"};
     options.add_options()
-               ("i,input-dir", "Directory containing input buffers", cxxopts::value<std::filesystem::path>())
-               ("o,output-dir", "Directory for writing weights and variances of weights", cxxopts::value<std::filesystem::path>())
-               ("m,methods", "Base denoising methods for blending, separated by comma without blanks (e.g., -m oidn,optix,mcgan)", cxxopts::value<std::vector<std::string>>())
-               ("s,solver", "Select solver to use (Candidates: brute, fbstab)", cxxopts::value<std::string>()->default_value("brute"))
+               ("i,input-dir", "Directory containing input buffers", cxxopts::value<std::filesystem::path>(), "<path>")
+               ("o,output-dir", "Directory for writing weights and variances of weights", cxxopts::value<std::filesystem::path>(), "<path>")
+               ("m,methods", "Base denoising methods for blending, separated by comma without blanks (e.g., -m oidn,optix,mcgan)", cxxopts::value<std::vector<std::string>>(), "<name>[,<name>[,...]]")
+               ("s,solver", "Select solver to use (Candidates: brute, fbstab)", cxxopts::value<std::string>()->default_value("brute"), "<name>")
                ("d,debug", "Debug mode, outputs intermediate buffers", cxxopts::value<bool>())
                ("q,quiet", "Output nothing but blending", cxxopts::value<bool>())
                ("statistics", "Enable statistics", cxxopts::value<bool>())
-               ("p,passes", "Number of passes in weight solving", cxxopts::value<int>()->default_value("1"));
-    
+               ("p,passes", "Number of passes in weight solving", cxxopts::value<int>()->default_value("1"), "<n>")
+               ("h,help", "Show help and exit", cxxopts::value<bool>());
+
     auto arguments = options.parse(argc, argv);
-    
+    if (arguments["help"].count()) {
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
+
     auto standardize = [](const cv::Mat &image) -> cv::Mat {
         cv::Scalar mean;
         cv::Scalar stddev;
@@ -36,7 +41,7 @@ int main(int argc, char *argv[]) {
         cv::Mat result = (image - mean) / stddev;
         return cv::min(cv::max(result, cv::Scalar::all(-3.0)), cv::Scalar::all(3.0));
     };
-    
+
     auto folder = arguments["i"].as<std::filesystem::path>();
     auto imread = [&folder, &standardize](const std::filesystem::path &name, bool should_standardize = false) -> cv::Mat {
         auto canonical_path = std::filesystem::canonical(folder / name);
@@ -57,7 +62,7 @@ int main(int argc, char *argv[]) {
         if (should_standardize) { return standardize(image); }
         return image;
     };
-    
+
     auto imwrite = [](const std::filesystem::path &name, const cv::Mat &image) noexcept {
         cv::imwrite(name.string(), image);
     };
@@ -65,20 +70,20 @@ int main(int argc, char *argv[]) {
     auto debug_mode = arguments["debug"].as<bool>();
     auto quiet = arguments["quiet"].as<bool>();
     auto statistics = arguments["statistics"].as<bool>();
-    
+
     auto output_folder = arguments["o"].as<std::filesystem::path>();
     if (!std::filesystem::exists(output_folder)) { std::filesystem::create_directories(output_folder); }
-    
+
     auto I0A = imread("colorA.exr");
     auto I0B = imread("colorB.exr");
-    
+
     auto methods = arguments["m"].as<std::vector<std::string>>();
-    
+
     auto N = methods.size();
     std::vector<cv::Mat> I(N);
     std::vector<cv::Mat> IA(N);
     std::vector<cv::Mat> IB(N);
-    
+
     for (auto i = 0u; i < N; i++) {
         auto &&method = methods[i];
         auto prefix = std::string{method}.append("/").append(method);
@@ -86,7 +91,7 @@ int main(int argc, char *argv[]) {
         IA[i] = imread(prefix + "A.exr", false);
         IB[i] = imread(prefix + "B.exr", false);
     }
-    
+
     auto albedo = imread("albedo.exr");
     auto normal = imread("normal.exr", true);
 
@@ -94,7 +99,7 @@ int main(int argc, char *argv[]) {
     std::vector<cv::Mat> weightsA;
     std::vector<cv::Mat> weightsB;
     cv::Mat stats;
-    
+
     auto solver_str = arguments["solver"].as<std::string>();
     auto solver = [solver_str] {
         if (solver_str == "brute") { return Solver::BRUTE; }
@@ -104,9 +109,9 @@ int main(int argc, char *argv[]) {
         std::cerr << "WARNING: Unknown solver: '" << solver_str << "', using 'brute' as fallback..." << std::endl;
         return Solver::BRUTE;
     }();
-    
+
     auto t0 = std::chrono::high_resolution_clock::now();
-    
+
     auto beta = arguments["beta"].as<double>();
     auto num_passes = arguments["passes"].as<int>();
     cv::Mat noisy;
@@ -134,9 +139,9 @@ int main(int argc, char *argv[]) {
             I0B = blend(IB, weightsB);
         }
     }
-    
+
     auto t1 = std::chrono::high_resolution_clock::now();
-    
+
     if (statistics) {
         using namespace std::chrono_literals;
         auto dt = (t1 - t0) / 1ns * 1e-9;
@@ -149,7 +154,7 @@ int main(int argc, char *argv[]) {
     if (!quiet) { std::cout << "Applying noisy weights..." << std::endl; }
     cv::Mat result = blend(I, weights);
     if (!quiet || debug_mode) { imwrite(output_folder / "blend-raw.exr", result); }
-    
+
     if (!quiet) { std::cout << "Filtering weights..." << std::endl; }
     std::array<cv::Mat, 2> joint_images{normal, albedo};
     std::array<float, 2> joint_sigmas{0.15f, 0.25f};
@@ -164,7 +169,7 @@ int main(int argc, char *argv[]) {
             imwrite(output_folder / ("weight-" + m + "-filtered.exr"), filtered_weights[i]);
         }
     }
-    
+
     if (!quiet) { std::cout << "Applying filtered weights..." << std::endl; }
     imwrite(output_folder / "blend.exr", blend(I, filtered_weights));
 }
