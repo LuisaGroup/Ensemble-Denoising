@@ -24,7 +24,8 @@ Then, use CMake to configure the build:
 cmake -S <project-dir> -B <build-dir> -D CMAKE_BUILD_TYPE=Release
 ```
 Note: to help CMake find Eigen3 and OpenCV, you may need to provide `-D Eigen3_DIR=...` and `-D OpenCV_DIR=...` as well.
-Also, you can use the `-G <generator>` option to specify your favorite generator, and `-D CMAKE_CXX_COMPILER=<...>` to choose the C++ compiler.
+Also, you can use the `-G <generator>` option to specify your favorite generator, and `-D CMAKE_CXX_COMPILER=<...>` to
+choose the C++ compiler.
 
 After the project is properly configured, use the following command to build the program:
 ```bash
@@ -65,8 +66,8 @@ denoising-data
        │
        └─ nfor.exr nforA.exr nforB.exr
 ```
-You can use any scene, renderer, and denoiser to generate these data. In the paper, we use the
-[`TungstenRenderer`](https://github.com/tunabrain/tungsten) for rendering.
+You can use any scene, renderer, and denoiser to generate these data. In the paper, we use
+[`Tungsten`](https://github.com/tunabrain/tungsten) for rendering.
 
 ## Running the Program
 To print the help message:
