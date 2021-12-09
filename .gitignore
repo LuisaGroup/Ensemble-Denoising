@@ -159,3 +159,5 @@ CTestTestfile.cmake
 _deps
 
 data/**
+
+.idea/**
