@@ -1,7 +1,9 @@
 # Ensemble Denoising
 Source Code for SIGGRAPH Asia 2021 Paper ***Ensemble Denoising for Monte Carlo Renderings***.
 
-[Paper](https://github.com/Mike-Leo-Smith/EnsembleDenoising/tree/master/paper) | [Code](https://github.com/Mike-Leo-Smith/EnsembleDenoising) | Talk Slides (Comming Soon)
+[Paper](https://github.com/Mike-Leo-Smith/EnsembleDenoising/tree/master/paper) |
+[Code](https://github.com/Mike-Leo-Smith/EnsembleDenoising) |
+[Talk Slides](https://github.com/Mike-Leo-Smith/EnsembleDenoising/tree/master/slides)
 
 ## Dependencies
 - A C++17 conformant compiler for building the code
