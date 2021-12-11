@@ -3,7 +3,7 @@ Source Code for SIGGRAPH Asia 2021 Paper ***Ensemble Denoising for Monte Carlo R
 
 [Paper](https://github.com/Mike-Leo-Smith/EnsembleDenoising/tree/master/paper) |
 [Code](https://github.com/Mike-Leo-Smith/EnsembleDenoising) |
-[Talk Slides](https://github.com/Mike-Leo-Smith/EnsembleDenoising/tree/master/slides)
+[Talk Slides](https://cloud.tsinghua.edu.cn/d/26910de5505b4bb2bca0/)
 
 ## Dependencies
 - A C++17 conformant compiler for building the code
